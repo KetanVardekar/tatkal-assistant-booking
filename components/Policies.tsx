@@ -1,48 +1,28 @@
-import { Clock, TrendingDown, FileText, Users } from "lucide-react";
+"use client";
 
-const policies = [
-  {
-    icon: Clock,
-    title: "First-Come, First-Served",
-    description:
-      "We process requests in the order received. Submit early — especially during peak travel season.",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    icon: TrendingDown,
-    title: "Limited Daily Slots",
-    description:
-      "We cap daily bookings to ensure quality. Once slots are full, we can't accept new requests for the day.",
-    color: "bg-amber-100 text-amber-700",
-  },
-  {
-    icon: FileText,
-    title: "No Booking Guarantee",
-    description:
-      "A submitted request does not guarantee a ticket. Confirmation depends entirely on Tatkal seat availability.",
-    color: "bg-slate-100 text-slate-700",
-  },
-  {
-    icon: Users,
-    title: "High Demand Disclaimer",
-    description:
-      "During peak season, we may not be able to process all requests. We prioritize earliest submissions.",
-    color: "bg-purple-100 text-purple-700",
-  },
-];
+import { Clock, TrendingDown, FileText, Users } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Policies() {
+  const { t } = useLanguage();
+  const p = t.policies;
+
+  const policies = [
+    { icon: Clock,        title: p.p1Title, description: p.p1Desc, color: "bg-blue-100 text-blue-700" },
+    { icon: TrendingDown, title: p.p2Title, description: p.p2Desc, color: "bg-amber-100 text-amber-700" },
+    { icon: FileText,     title: p.p3Title, description: p.p3Desc, color: "bg-slate-100 text-slate-700" },
+    { icon: Users,        title: p.p4Title, description: p.p4Desc, color: "bg-purple-100 text-purple-700" },
+  ];
+
   return (
     <section id="policies" className="py-20 px-4 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <span className="section-label mb-4 inline-flex">Good to Know</span>
+          <span className="section-label mb-4 inline-flex">{p.badge}</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">
-            Important Policies
+            {p.title}
           </h2>
-          <p className="text-gray-500 max-w-md mx-auto">
-            We believe in full transparency. Please read these before submitting.
-          </p>
+          <p className="text-gray-500 max-w-md mx-auto">{p.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

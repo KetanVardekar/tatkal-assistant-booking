@@ -1,29 +1,6 @@
-const reviews = [
-  {
-    name: "Priya Mehta",
-    route: "Delhi → Patna",
-    rating: 5,
-    text: "Got a confirmed 2A ticket on Rajdhani Express! Was skeptical at first but they delivered perfectly. Will definitely use again.",
-    avatar: "PM",
-    color: "bg-blue-600",
-  },
-  {
-    name: "Arun Kumar",
-    route: "Chennai → Bangalore",
-    rating: 5,
-    text: "Tried booking myself for 30 mins and failed. These guys got it in the first attempt. ₹200 well spent for 2 passengers.",
-    avatar: "AK",
-    color: "bg-indigo-600",
-  },
-  {
-    name: "Sunita Rao",
-    route: "Mumbai → Hyderabad",
-    rating: 5,
-    text: "My train was cancelled and I needed last-minute Tatkal. They responded in under 5 minutes on WhatsApp. Lifesavers!",
-    avatar: "SR",
-    color: "bg-violet-600",
-  },
-];
+"use client";
+
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function Stars({ count }: { count: number }) {
   return (
@@ -38,17 +15,24 @@ function Stars({ count }: { count: number }) {
 }
 
 export default function Testimonials() {
+  const { t } = useLanguage();
+  const te = t.testimonials;
+
+  const reviews = [
+    { name: "Priya Mehta",  route: "Delhi → Patna",           rating: 5, text: te.review1, avatar: "PM", color: "bg-blue-600" },
+    { name: "Arun Kumar",   route: "Chennai → Bangalore",      rating: 5, text: te.review2, avatar: "AK", color: "bg-indigo-600" },
+    { name: "Sunita Rao",   route: "Mumbai → Hyderabad",       rating: 5, text: te.review3, avatar: "SR", color: "bg-violet-600" },
+  ];
+
   return (
     <section className="py-20 px-4 bg-slate-50">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <span className="section-label mb-4 inline-flex">Traveller Reviews</span>
+          <span className="section-label mb-4 inline-flex">{te.badge}</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">
-            Trusted by Hundreds of Travellers
+            {te.title}
           </h2>
-          <p className="text-gray-500 max-w-md mx-auto">
-            Real stories from real passengers who got their Tatkal tickets booked
-          </p>
+          <p className="text-gray-500 max-w-md mx-auto">{te.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -62,9 +46,7 @@ export default function Testimonials() {
                 &ldquo;{review.text}&rdquo;
               </p>
               <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
-                <div
-                  className={`w-9 h-9 rounded-full ${review.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}
-                >
+                <div className={`w-9 h-9 rounded-full ${review.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                   {review.avatar}
                 </div>
                 <div>
@@ -76,22 +58,21 @@ export default function Testimonials() {
           ))}
         </div>
 
-        {/* Overall rating */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-6 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-lg mx-auto">
           <div className="text-center">
             <p className="text-4xl font-extrabold text-gray-900">4.9</p>
             <Stars count={5} />
-            <p className="text-xs text-gray-400 mt-1">Overall Rating</p>
+            <p className="text-xs text-gray-400 mt-1">{te.overallRating}</p>
           </div>
           <div className="w-px h-12 bg-gray-100" />
           <div className="text-center">
             <p className="text-4xl font-extrabold text-gray-900">500+</p>
-            <p className="text-xs text-gray-400 mt-1">Tickets Booked</p>
+            <p className="text-xs text-gray-400 mt-1">{te.ticketsBooked}</p>
           </div>
           <div className="w-px h-12 bg-gray-100" />
           <div className="text-center">
             <p className="text-4xl font-extrabold text-gray-900">98%</p>
-            <p className="text-xs text-gray-400 mt-1">Success Rate</p>
+            <p className="text-xs text-gray-400 mt-1">{te.successRate}</p>
           </div>
         </div>
       </div>

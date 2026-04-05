@@ -1,15 +1,20 @@
-import { Train, Phone } from "lucide-react";
+"use client";
 
-const links = [
-  { label: "Book Now", href: "#book" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Timing", href: "#timing" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Policies", href: "#policies" },
-];
+import { Train, Phone } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Footer() {
+  const { t } = useLanguage();
+  const f = t.footer;
   const year = new Date().getFullYear();
+
+  const navLinks = [
+    { label: t.footer.bookNow,        href: "#book" },
+    { label: t.nav.howItWorks,        href: "#how-it-works" },
+    { label: t.nav.timing,            href: "#timing" },
+    { label: t.nav.pricing,           href: "#pricing" },
+    { label: t.nav.policies,          href: "#policies" },
+  ];
 
   return (
     <footer className="bg-[#060c1f] text-white">
@@ -17,16 +22,14 @@ export default function Footer() {
       <div className="border-b border-white/8">
         <div className="max-w-5xl mx-auto px-4 py-12 text-center">
           <h3 className="text-2xl sm:text-3xl font-extrabold mb-3 tracking-tight">
-            Ready to book your Tatkal ticket?
+            {f.ctaTitle}
           </h3>
-          <p className="text-white/50 text-sm mb-6">
-            Don&apos;t fight the IRCTC rush. Let us handle it for you.
-          </p>
+          <p className="text-white/50 text-sm mb-6">{f.ctaSubtitle}</p>
           <a
             href="#book"
             className="btn-cta inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold"
           >
-            Book Now — Pay Only on Success
+            {f.ctaBtn}
           </a>
         </div>
       </div>
@@ -44,7 +47,7 @@ export default function Footer() {
           </div>
 
           <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -65,8 +68,8 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/6 pt-6 text-center text-xs text-white/20 space-y-1">
-          <p>© {year} TatkalAssist. Not affiliated with IRCTC or Indian Railways.</p>
-          <p>Independent booking assistance service only.</p>
+          <p>{f.copyright.replace("{year}", String(year))}</p>
+          <p>{f.disclaimer}</p>
         </div>
       </div>
     </footer>
