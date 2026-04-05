@@ -60,7 +60,6 @@ export default function Pricing() {
                 <span className="text-5xl font-extrabold">₹100</span>
                 <span className="text-white/50 text-lg mb-1">/passenger</span>
               </div>
-              <p className="text-white/40 text-sm mt-2">Minimum ₹50 per booking</p>
             </div>
 
             {/* Tiers */}

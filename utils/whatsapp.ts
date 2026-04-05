@@ -1,27 +1,40 @@
 // Replace with your actual WhatsApp number (country code + number, no + or spaces)
 export const WHATSAPP_NUMBER = "917977120757";
 
-export interface BookingData {
+export interface PassengerDetail {
   name: string;
+  age: string;
+  gender: string;
+}
+
+export interface BookingData {
   phone: string;
   from: string;
   to: string;
   date: string;
   train: string;
   passengers: string;
+  passengerDetails: PassengerDetail[];
 }
 
 export function generateWhatsAppMessage(data: BookingData): string {
+  const passengerLines = data.passengerDetails.map(
+    (p, i) =>
+      `  Passenger ${i + 1}: ${p.name}, Age ${p.age}, ${p.gender}`
+  );
+
   const lines = [
     "Hello, I want Tatkal booking assistance.",
     "",
-    `Name: ${data.name}`,
     `Phone: ${data.phone}`,
     `From: ${data.from}`,
     `To: ${data.to}`,
     `Date: ${data.date}`,
     `Train: ${data.train || "Not specified"}`,
     `Passengers: ${data.passengers}`,
+    "",
+    "Passenger Details:",
+    ...passengerLines,
   ];
   return lines.join("\n");
 }

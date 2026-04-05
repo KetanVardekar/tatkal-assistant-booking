@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import {
-  User,
   Phone,
   MapPin,
   Calendar,
   Train,
   Users,
+  User,
   ArrowRight,
   Loader2,
   Lock,
@@ -18,37 +18,42 @@ import {
   generateWhatsAppMessage,
   getWhatsAppUrl,
   formatDateForMessage,
+  PassengerDetail,
 } from "@/utils/whatsapp";
 
 const STORAGE_KEY = "tatkal_booking_autofill";
 
 interface FormData {
-  name: string;
   phone: string;
   from: string;
   to: string;
   date: string;
   train: string;
   passengers: string;
+  passengerDetails: PassengerDetail[];
 }
 
+type PassengerErrors = { name?: string; age?: string; gender?: string };
+
 interface FormErrors {
-  name?: string;
   phone?: string;
   from?: string;
   to?: string;
   date?: string;
   passengers?: string;
+  passengerDetails?: PassengerErrors[];
 }
 
+const emptyPassenger = (): PassengerDetail => ({ name: "", age: "", gender: "" });
+
 const defaultForm: FormData = {
-  name: "",
   phone: "",
   from: "",
   to: "",
   date: "",
   train: "",
   passengers: "1",
+  passengerDetails: [emptyPassenger()],
 };
 
 const trustPoints = [
@@ -57,6 +62,8 @@ const trustPoints = [
   "We notify you immediately via WhatsApp",
   "Handled by experienced IRCTC users",
 ];
+
+// ─── Generic field wrapper ────────────────────────────────────────────────────
 
 function Field({
   label,
@@ -99,6 +106,8 @@ function Field({
   );
 }
 
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function BookingForm() {
   const [formData, setFormData] = useState<FormData>(defaultForm);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -110,26 +119,51 @@ export default function BookingForm() {
   const minDate = tomorrow.toISOString().split("T")[0];
 
   const passengerCount = parseInt(formData.passengers) || 1;
-  const estimatedFee = Math.max(50, passengerCount * 100);
+  const estimatedFee = passengerCount * 100;
 
-  useEffect(() => {
+  // ── localStorage helpers ──────────────────────────────────────────────────
+
+  const loadFromStorage = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setFormData((prev) => ({
-          ...prev,
-          name: parsed.name ?? "",
-          phone: parsed.phone ?? "",
-          from: parsed.from ?? "",
-          to: parsed.to ?? "",
-          passengers: parsed.passengers ?? "1",
-        }));
-      }
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      setFormData((prev) => ({
+        ...prev,
+        phone: parsed.phone ?? prev.phone,
+        from: parsed.from ?? prev.from,
+        to: parsed.to ?? prev.to,
+        date: parsed.date ?? prev.date,
+        passengers: parsed.passengers ?? prev.passengers,
+      }));
     } catch {
       // ignore
     }
+  };
+
+  useEffect(() => { loadFromStorage(); }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) loadFromStorage();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
+
+  // ── Resize passenger detail array when count changes ─────────────────────
+
+  useEffect(() => {
+    const count = parseInt(formData.passengers) || 1;
+    setFormData((prev) => {
+      const current = prev.passengerDetails;
+      if (current.length === count) return prev;
+      const updated = Array.from({ length: count }, (_, i) => current[i] ?? emptyPassenger());
+      return { ...prev, passengerDetails: updated };
+    });
+  }, [formData.passengers]);
+
+  // ── Change handlers ───────────────────────────────────────────────────────
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -139,9 +173,30 @@ export default function BookingForm() {
     }
   };
 
+  const handlePassengerChange = (
+    index: number,
+    field: keyof PassengerDetail,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updated = prev.passengerDetails.map((p, i) =>
+        i === index ? { ...p, [field]: value } : p
+      );
+      return { ...prev, passengerDetails: updated };
+    });
+    // Clear that specific passenger's field error
+    setErrors((prev) => {
+      const pErrors = [...(prev.passengerDetails ?? [])];
+      if (pErrors[index]) pErrors[index] = { ...pErrors[index], [field]: undefined };
+      return { ...prev, passengerDetails: pErrors };
+    });
+  };
+
+  // ── Validation ────────────────────────────────────────────────────────────
+
   const validate = (): boolean => {
     const e: FormErrors = {};
-    if (!formData.name.trim()) e.name = "Full name is required";
+
     if (!formData.phone.trim()) {
       e.phone = "Phone number is required";
     } else if (!/^[6-9]\d{9}$/.test(formData.phone.replace(/\s/g, ""))) {
@@ -150,11 +205,28 @@ export default function BookingForm() {
     if (!formData.from.trim()) e.from = "Departure station is required";
     if (!formData.to.trim()) e.to = "Destination station is required";
     if (!formData.date) e.date = "Journey date is required";
-    if (!formData.passengers || parseInt(formData.passengers) < 1)
-      e.passengers = "At least 1 passenger required";
+
+    const pErrors: PassengerErrors[] = formData.passengerDetails.map((p) => {
+      const pe: PassengerErrors = {};
+      if (!p.name.trim()) pe.name = "Name is required";
+      if (!p.age.trim()) {
+        pe.age = "Age is required";
+      } else if (!/^\d+$/.test(p.age) || parseInt(p.age) < 1 || parseInt(p.age) > 125) {
+        pe.age = "Enter a valid age";
+      }
+      if (!p.gender) pe.gender = "Select gender";
+      return pe;
+    });
+
+    if (pErrors.some((pe) => Object.keys(pe).length > 0)) {
+      e.passengerDetails = pErrors;
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +236,6 @@ export default function BookingForm() {
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
-          name: formData.name,
           phone: formData.phone,
           from: formData.from,
           to: formData.to,
@@ -191,6 +262,8 @@ export default function BookingForm() {
     }, 400);
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
       {/* Form card */}
@@ -210,21 +283,9 @@ export default function BookingForm() {
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
-          {/* Row 1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Full Name" id="name" icon={User} error={errors.name} required>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Rahul Sharma"
-                className={errors.name ? "input-field-error" : "input-field"}
-              />
-            </Field>
 
+          {/* WhatsApp + From/To */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="WhatsApp Number" id="phone" icon={Phone} error={errors.phone} required>
               <input
                 id="phone"
@@ -238,10 +299,7 @@ export default function BookingForm() {
                 className={errors.phone ? "input-field-error" : "input-field"}
               />
             </Field>
-          </div>
 
-          {/* Row 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="From Station" id="from" icon={MapPin} error={errors.from} required>
               <input
                 id="from"
@@ -253,7 +311,9 @@ export default function BookingForm() {
                 className={errors.from ? "input-field-error" : "input-field"}
               />
             </Field>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="To Station" id="to" icon={MapPin} error={errors.to} required>
               <input
                 id="to"
@@ -265,10 +325,7 @@ export default function BookingForm() {
                 className={errors.to ? "input-field-error" : "input-field"}
               />
             </Field>
-          </div>
 
-          {/* Row 3 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Journey Date" id="date" icon={Calendar} error={errors.date} required>
               <input
                 id="date"
@@ -280,7 +337,9 @@ export default function BookingForm() {
                 className={errors.date ? "input-field-error" : "input-field"}
               />
             </Field>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Train Number" id="train" icon={Train} hint="(optional)">
               <input
                 id="train"
@@ -292,10 +351,7 @@ export default function BookingForm() {
                 className="input-field"
               />
             </Field>
-          </div>
 
-          {/* Passengers */}
-          <div>
             <Field label="Number of Passengers" id="passengers" icon={Users} error={errors.passengers} required>
               <select
                 id="passengers"
@@ -311,16 +367,100 @@ export default function BookingForm() {
                 ))}
               </select>
             </Field>
+          </div>
 
-            {/* Dynamic fee estimator */}
-            <div className="mt-2 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-              <span className="text-xs text-blue-700 font-medium">
-                Estimated service fee (if Confirmed/RAC):
-              </span>
-              <span className="text-sm font-bold text-blue-800">
-                ₹{estimatedFee}
-              </span>
-            </div>
+          {/* Dynamic passenger detail cards */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-gray-700">
+              Passenger Details <span className="text-red-500">*</span>
+            </p>
+
+            {formData.passengerDetails.map((passenger, idx) => {
+              const pe = errors.passengerDetails?.[idx] ?? {};
+              return (
+                <div
+                  key={idx}
+                  className="border border-gray-100 rounded-xl p-4 bg-gray-50 space-y-3"
+                >
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
+                    Passenger {idx + 1}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Name */}
+                    <div className="sm:col-span-1">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.name}
+                        onChange={(e) => handlePassengerChange(idx, "name", e.target.value)}
+                        placeholder="Rahul Sharma"
+                        className={pe.name ? "input-field-error" : "input-field"}
+                      />
+                      {pe.name && (
+                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                          <span>⚠</span> {pe.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Age */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Age <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={125}
+                        value={passenger.age}
+                        onChange={(e) => handlePassengerChange(idx, "age", e.target.value)}
+                        placeholder="25"
+                        className={pe.age ? "input-field-error" : "input-field"}
+                      />
+                      {pe.age && (
+                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                          <span>⚠</span> {pe.age}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Gender */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Gender <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={passenger.gender}
+                        onChange={(e) => handlePassengerChange(idx, "gender", e.target.value)}
+                        className={pe.gender ? "input-field-error" : "input-field"}
+                      >
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      {pe.gender && (
+                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                          <span>⚠</span> {pe.gender}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Fee estimator */}
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+            <span className="text-xs text-blue-700 font-medium">
+              Estimated service fee (if Confirmed/RAC):
+            </span>
+            <span className="text-sm font-bold text-blue-800">₹{estimatedFee}</span>
           </div>
 
           {/* Submit */}
@@ -380,14 +520,14 @@ export default function BookingForm() {
                 <span className="w-2 h-2 bg-emerald-500 rounded-full" />
                 Confirmed ticket
               </span>
-              <span className="font-bold text-sm text-gray-900">₹100/pax</span>
+              <span className="font-bold text-sm text-gray-900">₹100/person</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50">
               <span className="text-sm text-gray-600 flex items-center gap-2">
                 <span className="w-2 h-2 bg-amber-500 rounded-full" />
                 RAC ticket
               </span>
-              <span className="font-bold text-sm text-gray-900">₹100/pax</span>
+              <span className="font-bold text-sm text-gray-900">₹100/person</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-gray-600 flex items-center gap-2">
@@ -396,11 +536,6 @@ export default function BookingForm() {
               </span>
               <span className="font-bold text-sm text-emerald-600">FREE</span>
             </div>
-          </div>
-          <div className="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-            <p className="text-xs text-amber-800 font-semibold">
-              Minimum charge: ₹50 per booking
-            </p>
           </div>
         </div>
 

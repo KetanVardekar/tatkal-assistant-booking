@@ -7,6 +7,7 @@ import Pricing from "@/components/Pricing";
 import Testimonials from "@/components/Testimonials";
 import Policies from "@/components/Policies";
 import Disclaimer from "@/components/Disclaimer";
+import BookingDateCalculator from "@/components/BookingDateCalculator";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import MobileBookingCTA from "@/components/MobileBookingCTA";
 import Footer from "@/components/Footer";
@@ -16,6 +17,9 @@ export default function Home() {
     <main className="min-h-screen pb-16 md:pb-0">
       <Header />
       <Hero />
+
+      {/* Tatkal Date Calculator */}
+      <BookingDateCalculator />
 
       {/* Booking Form */}
       <section id="book" className="py-20 px-4 bg-white border-b border-gray-100">
