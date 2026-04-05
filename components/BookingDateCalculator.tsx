@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CalendarDays, Zap, Clock, ArrowDown, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ const BOOKING_KEY = "tatkal_booking_autofill"; // Same key as BookingForm
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BookingDateCalculator() {
+  const { t } = useLanguage();
+  const c = t.calc;
   const [journeyDate, setJourneyDate] = useState("");
   const [result, setResult] = useState<BookingDates | null>(null);
   const [error, setError] = useState("");
@@ -69,7 +72,7 @@ export default function BookingDateCalculator() {
 
   function handleCalculate() {
     if (!journeyDate) {
-      setError("Please select a journey date first.");
+      setError(c.errorNoDate);
       setResult(null);
       return;
     }
@@ -108,13 +111,13 @@ export default function BookingDateCalculator() {
         <div className="text-center mb-8">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold tracking-wide uppercase mb-4">
             <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-            Free Tool
+            {c.badge}
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Check Your Booking &amp; Tatkal Dates
+            {c.title}
           </h2>
           <p className="mt-2 text-blue-200/70 text-sm">
-            Know exactly when to open IRCTC for your journey
+            {c.subtitle}
           </p>
         </div>
 
@@ -124,7 +127,7 @@ export default function BookingDateCalculator() {
             htmlFor="calc-journey-date"
             className="block text-sm font-medium text-blue-100 mb-1"
           >
-            Journey Date <span className="text-red-400">*</span>
+            {c.journeyDateLabel} <span className="text-red-400">*</span>
           </label>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -146,7 +149,7 @@ export default function BookingDateCalculator() {
               onClick={handleCalculate}
               className="btn-cta px-6 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap flex-shrink-0"
             >
-              Calculate Dates
+              {c.calculateBtn}
             </button>
           </div>
 
@@ -167,18 +170,18 @@ export default function BookingDateCalculator() {
               <div className="bg-emerald-500/10 p-5 flex flex-col gap-1">
                 <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold uppercase tracking-wide">
                   <CalendarDays className="w-3.5 h-3.5" />
-                  General Booking Opens
+                  {c.generalLabel}
                 </span>
                 <span className="text-white text-xl font-bold">{result.generalBooking}</span>
-                <span className="text-emerald-300/60 text-xs">60 days before journey</span>
+                <span className="text-emerald-300/60 text-xs">{c.generalSub}</span>
               </div>
               <div className="bg-blue-500/10 p-5 flex flex-col gap-1">
                 <span className="flex items-center gap-1.5 text-blue-400 text-xs font-semibold uppercase tracking-wide">
                   <Zap className="w-3.5 h-3.5" />
-                  Tatkal Booking Date
+                  {c.tatkalLabel}
                 </span>
                 <span className="text-white text-xl font-bold">{result.tatkal}</span>
-                <span className="text-blue-300/60 text-xs">1 day before journey</span>
+                <span className="text-blue-300/60 text-xs">{c.tatkalSub}</span>
               </div>
             </div>
 
@@ -188,14 +191,14 @@ export default function BookingDateCalculator() {
                 <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
                 <div>
                   <p className="text-white text-sm font-semibold">10:00 AM</p>
-                  <p className="text-blue-200/60 text-xs">AC Classes (1A, 2A, 3A, CC)</p>
+                  <p className="text-blue-200/60 text-xs">{c.acClasses}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
                 <div>
                   <p className="text-white text-sm font-semibold">11:00 AM</p>
-                  <p className="text-blue-200/60 text-xs">Sleeper (SL) &amp; Second Sitting (2S)</p>
+                  <p className="text-blue-200/60 text-xs">{c.slClasses}</p>
                 </div>
               </div>
             </div>
@@ -204,21 +207,20 @@ export default function BookingDateCalculator() {
             <div className="bg-amber-500/10 border-t border-amber-400/20 px-5 py-3 flex items-start gap-2">
               <span className="text-amber-400 text-base leading-none mt-0.5">💡</span>
               <p className="text-amber-200/80 text-xs leading-relaxed">
-                Be ready <span className="font-semibold text-amber-300">5–10 minutes before</span> booking
-                time for the best chances of getting a confirmed ticket.
+                {c.tipPrefix} <span className="font-semibold text-amber-300">{c.tipBold}</span> {c.tipSuffix}
               </p>
             </div>
 
             {/* CTA */}
             <div className="bg-white/5 px-5 py-4 flex flex-col sm:flex-row items-center gap-3">
               <p className="text-blue-200/60 text-xs text-center sm:text-left flex-1">
-                Journey date auto-filled in the booking form below.
+                {c.autofilled}
               </p>
               <button
                 onClick={scrollToBooking}
                 className="flex items-center gap-2 btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold w-full sm:w-auto justify-center"
               >
-                Proceed to Booking
+                {c.proceedBtn}
                 <ArrowDown className="w-4 h-4" />
               </button>
             </div>
