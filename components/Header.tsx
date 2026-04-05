@@ -89,7 +89,10 @@ export default function Header() {
             className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${navTextClass}`}
           >
             <Phone className="w-3.5 h-3.5" />
-            <span>+91 7977120757</span>
+            <span className="flex flex-col leading-tight">
+              <span className="text-xs opacity-70">Call Ketan</span>
+              <span>+91 7977120757</span>
+            </span>
           </a>
           <a href="#book" className="btn-cta px-5 py-2 text-sm rounded-xl">
             {t.nav.bookNow}
@@ -145,7 +148,10 @@ export default function Header() {
                 className="flex items-center gap-2 py-2.5 px-3 text-gray-600 text-sm font-medium"
               >
                 <Phone className="w-4 h-4 text-blue-600" />
-                +91 7977120757
+                <span>
+                  <span className="block text-xs text-gray-400">Call Ketan</span>
+                  +91 7977120757
+                </span>
               </a>
               <a
                 href="#book"

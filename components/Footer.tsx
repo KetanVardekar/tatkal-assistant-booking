@@ -63,7 +63,10 @@ export default function Footer() {
             className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
           >
             <Phone className="w-4 h-4" />
-            +91 7977120757
+            <span>
+              <span className="block text-xs text-white/30">Call Ketan Vardekar</span>
+              +91 7977120757
+            </span>
           </a>
         </div>
 
